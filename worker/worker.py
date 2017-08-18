@@ -131,7 +131,7 @@ def keep_polling():
         finally:
             time.sleep(5)
 
-if __name__ == '__main__
+if __name__ == '__main__':
     cred = credentials.Certificate(
         FIREBASE_KEY_DATA
     )
