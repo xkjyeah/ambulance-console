@@ -7,6 +7,7 @@ import os
 from urllib.parse import urlencode
 from html.parser import HTMLParser
 
+
 import firebase_admin
 import firebase_admin.db
 from firebase_admin import credentials
@@ -130,7 +131,7 @@ def keep_polling():
         finally:
             time.sleep(5)
 
-if __name__ == '__main__':
+if __name__ == '__main__
     cred = credentials.Certificate(
         FIREBASE_KEY_DATA
     )
