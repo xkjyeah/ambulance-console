@@ -13,7 +13,7 @@ import firebase_admin.db
 from firebase_admin import credentials
 
 # Firebase data
-FIREBASE_KEY_DATA = json.loads(base64.b64decode(os.environ['FIREBASE_KEY']))
+FIREBASE_KEY_DATA = json.loads(base64.b64decode(os.environ['FIREBASE_KEY']).decode('utf-8'))
 FIREBASE_URL="https://case-calendar-4b522.firebaseio.com"
 TNT_USERNAME = os.environ['TNT_USERNAME']
 TNT_PASSWORD = os.environ['TNT_PASSWORD']
