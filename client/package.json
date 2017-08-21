@@ -14,9 +14,12 @@
   },
   "dependencies": {
     "axios": "^0.16.2",
+    "dateformat": "^2.0.0",
     "firebase": "^4.3.0",
+    "lodash": "^4.17.4",
     "node-sass": "^4.5.3",
     "nuxt": "^1.0.0-rc3",
+    "promise-polyfill": "^6.0.2",
     "sass-loader": "^6.0.6",
     "vue2-google-maps": "^0.8.0"
   },

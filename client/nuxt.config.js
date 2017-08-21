@@ -34,5 +34,9 @@ module.exports = {
         })
       }
     }
-  }
+  },
+  plugins: [
+    {src: '~/plugins/firebase.js', ssr: false},
+    '~/plugins/google-maps.js',
+  ]
 }

@@ -11,6 +11,11 @@ module.exports = {
     'html'
   ],
   // add your custom rules here
-  rules: {},
-  globals: {}
+  rules: {
+    'no-comma-dangle': 0,
+    'comma-dangle': 0,
+  },
+  globals: {
+    'google': 1
+  }
 }
