@@ -8,6 +8,7 @@
         :text="searchString"
         placeholder="Enter address / postal code"
         @place_changed="updateOrigin"
+        @input="($event.target.value === '') && updateOrigin(null)"
         />
 
       <table class="vehicle-results">
@@ -15,11 +16,11 @@
           <tr>
             <th>Vehicle</th>
             <th>Location</th>
+            <th>Actions</th>
             <th>Dist</th>
             <th>Crew</th>
             <th>Destination</th>
             <th>Busy until</th>
-            <th>Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -36,6 +37,36 @@
               {{vehicle.location}}
             </div>
           </td>
+
+          <td class="toolbar-cell" style="white-space: nowrap">
+            <button @click="showDispatch(vehicle)">
+              »
+            </button>
+            <Dropdown align="right" style="display: inline-block">
+                <div class="menu-button" slot="menu-button">
+                  ...
+                  <i class="mdi mdi-triangle" />
+                </div>
+                <template scope="s" slot="dropdown" >
+                  <div class="menu-dropdown-buttons">
+                    <!-- <button @click="showDispatch(vehicle); s.dismiss()">
+                      Dispatch
+                    </button> -->
+                    <button @click="pushChange(vehicle.registrationno, 'busyUntil', null); s.dismiss()" v-if="!vehicle.status.disabled">
+                      Mark as Free
+                    </button>
+                    <div>
+                      <hr/>
+                    </div>
+                    <button @click="pushChange(vehicle.registrationno, 'disabled', !vehicle.status.disabled);
+                                    s.dismiss()">
+                      {{ vehicle.status.disabled ? 'Enable' : 'Disable' }}
+                    </button>
+                </div>
+              </template>
+            </Dropdown>
+          </td>
+
           <td>
             <template v-if="origin">{{(vehicle.distance / 1000).toFixed(1)}}&nbsp;km</template>
           </td>
@@ -67,34 +98,6 @@
           </td>
           <td>
             <BusyStatus v-if="!vehicle.status.disabled" :value="vehicle.status.busyUntil" />
-          </td>
-          <td class="toolbar-cell" style="white-space: nowrap">
-            <button @click="showDispatch(vehicle)">
-              »
-            </button>
-            <Dropdown align="right" style="display: inline-block">
-                <div class="menu-button" slot="menu-button">
-                  ...
-                  <i class="mdi mdi-triangle" />
-                </div>
-                <template scope="s" slot="dropdown" >
-                  <div class="menu-dropdown-buttons">
-                    <!-- <button @click="showDispatch(vehicle); s.dismiss()">
-                      Dispatch
-                    </button> -->
-                    <button @click="pushChange(vehicle.registrationno, 'busyUntil', null); s.dismiss()" v-if="!vehicle.status.disabled">
-                      Mark as Free
-                    </button>
-                    <div>
-                      <hr/>
-                    </div>
-                    <button @click="pushChange(vehicle.registrationno, 'disabled', !vehicle.status.disabled);
-                                    s.dismiss()">
-                      {{ vehicle.status.disabled ? 'Enable' : 'Disable' }}
-                    </button>
-                </div>
-              </template>
-            </Dropdown>
           </td>
           <!-- <td>
             <DatasheetCell>
@@ -145,7 +148,15 @@
         />
     </GmapMap>
 
-    <Modal ref="modalHelper" />
+    <!-- <Modal ref="modalHelper" /> -->
+    <transition name="swipe-from-right">
+      <Dispatch v-if="showDispatching"
+        @resolve="submitDispatch"
+        @reject="showDispatching = false"
+        :originPlace="originPlace"
+        :vehicle="dispatchingVehicle"
+        class="dispatch-dialog" />
+    </transition>
   </div>
 </template>
 
@@ -153,6 +164,16 @@
 .main-autocomplete input {
   font-size: 110%;
   width: 100%;
+}
+.dispatch-dialog {
+  right: 0;
+  width: 40vw;
+  top: 4em;
+  height: 500px;
+  background: white;
+  box-shadow: 1px 1px 4px rgba(0,0,0,0.5);
+  padding: 1em;
+  position: absolute;
 }
 table.vehicle-results {
   tr {
@@ -246,7 +267,7 @@ import {latlngDistance} from '~/util/geo'
 
 export default {
   components: {
-    OnemapAutocomplete, DatasheetCell, BusyStatus, Modal, Dropdown
+    OnemapAutocomplete, DatasheetCell, BusyStatus, Modal, Dropdown, Dispatch
   },
   data () {
     return {
@@ -254,6 +275,7 @@ export default {
       vehicles: [],
       vehicleStatuses: {},
       selectedVehicle: null,
+      dispatchingVehicle: null,
       selectedJob: null,
       user: null,
       origin: null,
@@ -263,6 +285,7 @@ export default {
 
       changes: [],
       updatePromise: null,
+      showDispatching: false,
     }
   },
   mounted () {
@@ -387,6 +410,8 @@ export default {
 
         this.center = this.origin
         this.zoom = 15
+      } else {
+        this.origin = null
       }
     },
 
@@ -424,19 +449,29 @@ export default {
     },
 
     showDispatch (vehicle) {
-      this.$refs.modalHelper.show(
-        Dispatch,
-        {vehicle, originPlace: this.originPlace}
-      )
-        .then((dispatch) => {
-          for (let k in dispatch) {
-            this.pushChange(vehicle.registrationno, k, dispatch[k])
-          }
-          this.$refs.modalHelper.hide()
-        })
-        .catch(() => {
-          this.$refs.modalHelper.hide()
-        })
+      this.dispatchingVehicle = vehicle
+      this.showDispatching = true
+
+      // this.$refs.modalHelper.show(
+      //   Dispatch,
+      //   {vehicle, originPlace: this.originPlace}
+      // )
+      //   .then((dispatch) => {
+      //     for (let k in dispatch) {
+      //       this.pushChange(vehicle.registrationno, k, dispatch[k])
+      //     }
+      //     this.$refs.modalHelper.hide()
+      //   })
+      //   .catch(() => {
+      //     this.$refs.modalHelper.hide()
+      //   })
+    },
+
+    submitDispatch ([registrationno, dispatch]) {
+      for (let k in dispatch) {
+        this.pushChange(registrationno, k, dispatch[k])
+      }
+      this.showDispatching = false
     },
 
     showJob (vehicle, origin, destination) {

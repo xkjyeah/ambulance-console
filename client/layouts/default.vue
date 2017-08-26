@@ -54,4 +54,13 @@ html
   width: 100%;
   display: block;
 }
+.swipe-from-right-enter-to, .swipe-from-right-leave {
+  transform: translateX(0%);
+}
+.swipe-from-right-enter-active, .swipe-from-right-leave-active {
+  transition: transform 0.3s;
+}
+.swipe-from-right-enter, .swipe-from-right-leave-to {
+  transform: translateX(100%);
+}
 </style>

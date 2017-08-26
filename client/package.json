@@ -10,12 +10,15 @@
     "start": "nuxt start",
     "generate": "nuxt generate",
     "lint": "eslint --ext .js,.vue --ignore-path .gitignore .",
-    "precommit": "npm run lint"
+    "precommit": "npm run lint",
+    "push": "shx touch dist/.nojekyll && gh-pages --depth 1 -d dist -t",
+    "deploy": "npm run generate && npm run push"
   },
   "dependencies": {
     "axios": "^0.16.2",
     "dateformat": "^2.0.0",
     "firebase": "^4.3.0",
+    "gh-pages": "^1.0.0",
     "left-pad": "^1.1.3",
     "lodash": "^4.17.4",
     "node-sass": "^4.5.3",

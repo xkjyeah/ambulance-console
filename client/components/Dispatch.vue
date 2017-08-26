@@ -1,5 +1,6 @@
-origin<template>
+<template>
   <div class="dispatch-modal">
+    <button @click="$emit('reject')" style="float: right">X</button>
     <h1>{{vehicle.registrationno}}</h1>
     <h2>{{vehicle.status.crew}}</h2>
     <h3>Currently at: {{vehicle.location}}</h3>
@@ -61,7 +62,7 @@ origin<template>
 
     <div class="button-row">
       <button @click="returnDispatch">OK</button>
-      <button @click="reject">Cancel</button>
+      <button @click="$emit('reject')">Cancel</button>
     </div>
   </div>
 </template>
@@ -186,18 +187,24 @@ export default {
     },
 
     returnDispatch () {
-      this.resolve({
-        ...pick(this, [
-          'origin',
-          'originDescription',
-          'originExtra',
-          'destination',
-          'destinationDescription',
-          'destinationExtra',
-          'details',
-        ]),
-        busyUntil: this.busyUntil ? new Date(this.busyUntil) : null,
-      })
+      this.$emit(
+        'resolve',
+        [
+          this.vehicle.registrationno,
+          {
+            ...pick(this, [
+              'origin',
+              'originDescription',
+              'originExtra',
+              'destination',
+              'destinationDescription',
+              'destinationExtra',
+              'details',
+            ]),
+            busyUntil: this.busyUntil ? new Date(this.busyUntil) : null,
+          }
+        ]
+      )
     },
     addTime (t) {
       this.timeDirty = true

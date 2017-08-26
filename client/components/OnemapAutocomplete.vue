@@ -1,6 +1,6 @@
 <template>
   <div class="onemap-autocomplete">
-    <input type="text" v-model="searchQuery" @input="updateResults"
+    <input type="text" v-model="searchQuery" @input="updateResults($event); $emit('input', $event)"
       :placeholder="placeholder"
       @keydown.prevent.down="selectIndex(selectedIndex + 1)"
       @keydown.prevent.up="selectIndex(selectedIndex - 1)"

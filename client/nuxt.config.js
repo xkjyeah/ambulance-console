@@ -25,6 +25,10 @@ module.exports = {
     ** Run ESLINT on save
     */
     extend (config, ctx) {
+      if (ctx._generate) {
+        config.output.publicPath = '/ambulance-console/_nuxt/'
+      }
+
       if (ctx.dev && ctx.isClient) {
         config.module.rules.push({
           enforce: 'pre',
@@ -38,5 +42,8 @@ module.exports = {
   plugins: [
     {src: '~/plugins/firebase.js', ssr: false},
     '~/plugins/google-maps.js',
-  ]
+  ],
+  router: {
+    base: '/ambulance-console/'
+  }
 }
