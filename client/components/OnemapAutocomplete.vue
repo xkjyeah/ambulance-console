@@ -32,6 +32,9 @@
 
     padding: 0;
     margin: 0;
+
+    z-index: 100;
+
     & > li {
       list-style: none;
       padding: 0.2em;
