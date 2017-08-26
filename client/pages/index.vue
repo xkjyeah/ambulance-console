@@ -146,6 +146,14 @@
           selectedJob.current,
         ]" :options="dashedLineOptions"
         />
+      <GmapMarker v-if="selectedJob"
+        label="O"
+        :position="selectedJob.origin"
+        />
+      <GmapMarker v-if="selectedJob"
+        label="D"
+        :position="selectedJob.destination"
+        />
     </GmapMap>
 
     <!-- <Modal ref="modalHelper" /> -->
