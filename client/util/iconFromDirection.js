@@ -61,5 +61,9 @@ const image = typeof document !== 'undefined' && new RotatedImage(icon)
 export default function getImage (direction, overlay) {
   // cache[direction] = cache[direction] || image.rotate(direction * Math.PI / 4, overlay)
   return image.rotate((-direction + 1) * Math.PI / 4, overlay)
+  // return {
+  //   url: image.rotate((-direction + 1) * Math.PI / 4, overlay),
+  //   anchor: typeof google !== 'undefined' ? new google.maps.Point(35, 35) : null,
+  // }
   // return cache[direction]
 }

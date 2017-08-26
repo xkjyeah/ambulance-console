@@ -39,9 +39,6 @@ const timer = new Vue({
   destroyed () {
     clearInterval(this.$theInterval)
   },
-  methods: {
-    dateformat
-  }
 })
 
 export default {
@@ -51,5 +48,8 @@ export default {
       return timer.now
     }
   },
+  methods: {
+    dateformat
+  }
 }
 </script>

@@ -50,4 +50,8 @@ html
   color: #fff;
   background-color: #35495e;
 }
+.full-width {
+  width: 100%;
+  display: block;
+}
 </style>

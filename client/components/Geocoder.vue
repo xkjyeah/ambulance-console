@@ -1,7 +1,8 @@
 <template>
   <div>
     <div>
-      <input type="text" v-model="searchQuery" @input="updateResults"
+      <input type="text" v-model="searchQuery"
+      @input="updateResults"
         placeholder="Search here!"
         />
     </div>
@@ -40,6 +41,7 @@ ul.geocoder-search-results {
 import axios from 'axios'
 import _ from 'lodash'
 import querystring from 'querystring'
+import {resultToPlace} from '~/util/onemap'
 
 export default {
   name: 'app',
@@ -87,7 +89,7 @@ export default {
     },
     selectResult (r) {
       this.selectedResult = r
-      this.$emit('place_changed', this.resultToLatLng(r))
+      this.$emit('place_changed', resultToPlace(r))
     }
   }
 }

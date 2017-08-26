@@ -3,8 +3,12 @@
     <section class="panel vehicle-info">
       <button v-if="!user" @click="login">Login</button>
 
-      <Geocoder v-model="searchString" @place_changed="updateOrigin"
-        @inspect="zoomTo($event)"/>
+      <OnemapAutocomplete
+        class="main-autocomplete"
+        :text="searchString"
+        placeholder="Enter address / postal code"
+        @place_changed="updateOrigin"
+        />
 
       <table class="vehicle-results">
         <thead>
@@ -33,7 +37,7 @@
             </div>
           </td>
           <td>
-            <template v-if="origin">{{(vehicle.distance / 1000).toFixed(1)}} km</template>
+            <template v-if="origin">{{(vehicle.distance / 1000).toFixed(1)}}&nbsp;km</template>
           </td>
           <td>
             <DatasheetCell>
@@ -44,26 +48,55 @@
                 @change="pushChange(vehicle.registrationno, 'crew', $event.target.value)" />
             </DatasheetCell>
           </td>
-          <td>
-            {{vehicle.status.destinationDescription}}
+          <td  class="destination-dropdown-cell">
+            <Dropdown align="left" class="destination-dropdown">
+              <div class="menu-button" slot="menu-button">
+                {{vehicle.status.destinationDescription}}
+              </div>
+              <div slot="dropdown" class="destination-dropdown-menu"
+                  @click="showJob(vehicle, vehicle.status.origin, vehicle.status.destination)">
+                <h4>From: {{vehicle.status.originDescription}}</h4>
+                <div>{{vehicle.status.originDescriptionExtra}}</div>
+                <hr/>
+                <h4>To: {{vehicle.status.destinationDescription}}</h4>
+                <div>{{vehicle.status.destinationDescriptionExtra}}</div>
+                <hr/>
+                <h4>{{vehicle.status.details}}</h4>
+              </div>
+            </Dropdown>
           </td>
           <td>
             <BusyStatus v-if="!vehicle.status.disabled" :value="vehicle.status.busyUntil" />
           </td>
-          <td class="toolbar-cell">
-            <div class="toolbar">
-              <button>
-                Dispatch
-              </button>
-              <button>
-                End
-              </button>
-              <button @click="pushChange(vehicle.registrationno, 'disabled', !vehicle.status.disabled)">
-                {{ vehicle.status.disabled ? 'Enable' : 'Disable' }}
-              </button>
-            </div>
+          <td class="toolbar-cell" style="white-space: nowrap">
+            <button @click="showDispatch(vehicle)">
+              »
+            </button>
+            <Dropdown align="right" style="display: inline-block">
+                <div class="menu-button" slot="menu-button">
+                  ...
+                  <i class="mdi mdi-triangle" />
+                </div>
+                <template scope="s" slot="dropdown" >
+                  <div class="menu-dropdown-buttons">
+                    <!-- <button @click="showDispatch(vehicle); s.dismiss()">
+                      Dispatch
+                    </button> -->
+                    <button @click="pushChange(vehicle.registrationno, 'busyUntil', null); s.dismiss()" v-if="!vehicle.status.disabled">
+                      Mark as Free
+                    </button>
+                    <div>
+                      <hr/>
+                    </div>
+                    <button @click="pushChange(vehicle.registrationno, 'disabled', !vehicle.status.disabled);
+                                    s.dismiss()">
+                      {{ vehicle.status.disabled ? 'Enable' : 'Disable' }}
+                    </button>
+                </div>
+              </template>
+            </Dropdown>
           </td>
-          <td>
+          <!-- <td>
             <DatasheetCell>
               {{vehicle.status.remarks || '\u00a0'}}
 
@@ -71,7 +104,7 @@
                 class="the-editor" slot="editor"
                 @change="pushChange(vehicle.registrationno, 'remarks', $event.target.value)" />
             </DatasheetCell>
-          </td>
+          </td> -->
         </tr>
         </tbody>
       </table>
@@ -95,11 +128,32 @@
           lng: parseFloat(selectedVehicle.longitude)
           }, origin]"
         />
+      <GmapPolyline v-if="selectedJob" :path="[
+          selectedJob.origin,
+          selectedJob.destination
+        ]" :options="dashedLineOptions"
+        />
+      <GmapPolyline v-if="selectedJob" :path="[
+          selectedJob.current,
+          selectedJob.destination
+        ]" :options="dashedLineOptions"
+        />
+      <GmapPolyline v-if="selectedJob" :path="[
+          selectedJob.origin,
+          selectedJob.current,
+        ]" :options="dashedLineOptions"
+        />
     </GmapMap>
+
+    <Modal ref="modalHelper" />
   </div>
 </template>
 
 <style lang="scss">
+.main-autocomplete input {
+  font-size: 110%;
+  width: 100%;
+}
 table.vehicle-results {
   tr {
     &.active td {
@@ -109,34 +163,46 @@ table.vehicle-results {
       background-color: #fed;
     }
     &.disabled td {
-      color: #DDD;
+      color: #CCC;
       text-decoration: line-through;
     }
   }
 
-  tr {
-    .toolbar-cell:hover {
-      overflow: visible;
-      z-index: 100;
-      .toolbar {
-        background-color: #FF0;
-        left: -5px;
-        top: -5px;
-        padding: 5px;
+  .destination-dropdown {
+    & > button {
+      background: transparent;
+      width: 100%;
+      display: block;
+      border: none;
+      text-align: left;
+      padding: 0.5em 0;
+      cursor: pointer;
+      &:hover {
+        background-color: #DCB;
       }
     }
-    .toolbar-cell {
-      position: relative;
-      overflow: hidden;
-      z-index: 50;
+    .destination-dropdown-menu {
+      padding: 0.5em;
+      background: white;
+      box-shadow: 1px 1px 5px rgba(0, 0, 0, 0.5);
+    }
+  }
 
-      .toolbar {
-        display: flex;
-        flex-direction: column;
-        position: absolute;
-        left: 0;
-        top: 0;
-        min-width: 100%;
+  .menu-dropdown-buttons {
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0.1em 0.1em 0.2em rgba(0,0,0,0.5);
+
+    button {
+      background: transparent;
+      border: none;
+      padding: 0.5em 0.3em;
+      text-align: left;
+      min-width: 9em;
+      cursor: pointer;
+
+      &:hover {
+        background: #FED;
       }
     }
   }
@@ -149,20 +215,38 @@ table.vehicle-results {
   white-space: nowrap;
   cursor: pointer;
 }
+
+.panel-container {
+  position: fixed;
+  top: 0; left: 0; bottom: 0; right: 0;
+  display: flex;
+
+  .panel {
+    flex: 1 1 50%;
+
+    &.vehicle-info {
+      overflow: scroll;
+    }
+  }
+}
 </style>
 
 <script>
 // import {mapState} from 'vuex'
 import * as firebase from 'firebase'
 import _ from 'lodash'
-import Geocoder from '~/components/Geocoder'
+import OnemapAutocomplete from '~/components/OnemapAutocomplete'
 import DatasheetCell from '~/components/DatasheetCell'
 import BusyStatus from '~/components/BusyStatus'
+import Dispatch from '~/components/Dispatch'
+import Dropdown from '~/components/Dropdown'
+import Modal from '~/components/Modal'
 import iconFromDirection from '~/util/iconFromDirection.js'
+import {latlngDistance} from '~/util/geo'
 
 export default {
   components: {
-    Geocoder, DatasheetCell, BusyStatus
+    OnemapAutocomplete, DatasheetCell, BusyStatus, Modal, Dropdown
   },
   data () {
     return {
@@ -170,8 +254,10 @@ export default {
       vehicles: [],
       vehicleStatuses: {},
       selectedVehicle: null,
+      selectedJob: null,
       user: null,
       origin: null,
+      originPlace: null,
       center: {lat: 1.38, lng: 103.8},
       zoom: 11,
 
@@ -240,9 +326,13 @@ export default {
           ...v,
           status: {
             crew: '',
-            remarks: '',
+            details: '',
             destination: null,
             destinationDescription: '',
+            destinationDescriptionExtra: '',
+            origin: null,
+            originDescription: '',
+            originDescriptionExtra: '',
             busyUntil: null,
             ...this.vehicleStatuses[v.registrationno],
           }
@@ -269,6 +359,20 @@ export default {
         }))
         return _.sortBy(withDistances, 'distance')
       }
+    },
+    dashedLineOptions () {
+      return {
+        strokeOpacity: 0,
+        icons: [{
+          icon: {
+            path: 'M 0,-1 0,1',
+            strokeOpacity: 1,
+            scale: 4
+          },
+          offset: '0',
+          repeat: '20px'
+        }],
+      }
     }
   },
   methods: {
@@ -276,8 +380,14 @@ export default {
       const provider = new firebase.auth.GoogleAuthProvider()
       firebase.auth().signInWithPopup(provider)
     },
-    updateOrigin (e) {
-      this.origin = e
+    updateOrigin (p) {
+      if (p) {
+        this.origin = p.location
+        this.originPlace = p
+
+        this.center = this.origin
+        this.zoom = 15
+      }
     },
 
     zoomTo (ll) {
@@ -311,6 +421,34 @@ export default {
     },
     pushChange (vehicle, key, value) {
       this.changes.push([vehicle, key, value])
+    },
+
+    showDispatch (vehicle) {
+      this.$refs.modalHelper.show(
+        Dispatch,
+        {vehicle, originPlace: this.originPlace}
+      )
+        .then((dispatch) => {
+          for (let k in dispatch) {
+            this.pushChange(vehicle.registrationno, k, dispatch[k])
+          }
+          this.$refs.modalHelper.hide()
+        })
+        .catch(() => {
+          this.$refs.modalHelper.hide()
+        })
+    },
+
+    showJob (vehicle, origin, destination) {
+      if (origin && destination) {
+        const current = {
+          lat: parseFloat(vehicle.latitude),
+          lng: parseFloat(vehicle.longitude),
+        }
+        console.log(origin, destination, current)
+        this.selectedJob = {origin, current, destination}
+        this.zoomToPoints(origin, destination)
+      }
     }
   }
 }
@@ -324,31 +462,4 @@ function dateFromString (s) {
     return d
   }
 }
-
-function latlngDistance (ll1, ll2) {
-  var rr1 = [ll1[0] / 180 * Math.PI, ll1[1] / 180 * Math.PI]
-  var rr2 = [ll2[0] / 180 * Math.PI, ll2[1] / 180 * Math.PI]
-
-  var dx = (rr1[1] - rr2[1]) * Math.cos(0.5 * (rr1[0] + rr2[0]))
-  var dy = rr1[0] - rr2[0]
-
-  var dist = Math.sqrt(dx * dx + dy * dy) * 6371000
-  return dist
-}
 </script>
-
-<style lang="scss">
-.panel-container {
-  position: fixed;
-  top: 0; left: 0; bottom: 0; right: 0;
-  display: flex;
-
-  .panel {
-    flex: 1 1 50%;
-
-    &.vehicle-info {
-      overflow: scroll;
-    }
-  }
-}
-</style>
